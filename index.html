@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<!--
+=====================================================================
+  GERADOR DE ARTES — TribeMD · Oncologia Brasil · Hemomeeting
+  (versão GitHub Pages: substitui o Gerador de rodapé)
+=====================================================================
+  ARQUIVOS DO SITE (todos na raiz do repositório)
+    index.html ............... estrutura da página (este arquivo)
+    style.css ................ todo o visual
+    script.js ................ todo o comportamento
+    logos/logos.json ......... lista de logos e templates
+    logos/grupo/ ............. PNGs dos logos do grupo
+    logos/farmaceuticas/ ..... PNGs dos logos das farmacêuticas
+    dados/banco.json ......... cores, sombra das fotos, doutores e
+                               rodapés salvos
+    dados/medicos/ ........... fotos dos doutores (JPG 800 × 800)
+    dados/rodapes/ ........... PNG de cada rodapé salvo
+
+  BANCO DE DADOS = O REPOSITÓRIO
+  Todos leem os arquivos acima. Quem conecta a chave do GitHub
+  (botão “Conectar GitHub”) grava: cada alteração vira um commit, e o
+  GitHub Pages republica o site em 1–2 minutos. A chave fica salva só
+  no navegador de quem conectou.
+
+  ESTRUTURA DA PÁGINA
+  1. Topo ...................... título, três abas e status do GitHub.
+  2. Aba “Rodapé” .............. o Gerador de rodapé completo. O rodapé
+                                 montado aqui é o mesmo usado nas artes.
+  0. Aba “Conteúdo” ........... textos, fundo, identidade, médicos,
+                                 rodapé e disclaimer (primeira aba).
+  3. Aba “Gerar notícia” ....... monta todas as artes ao mesmo tempo.
+  4. Aba “Banco de dados” ...... cores, sombra, doutores, logos e
+                                 rodapés salvos (lidos do repositório).
+  5. Diálogos .................. envio de logo, cadastro de doutor,
+                                 puxar do banco, formato personalizado,
+                                 Área do administrador e confirmação.
+
+  TESTAR NO COMPUTADOR
+  Abra por http, não com duplo clique. Na pasta: python -m http.server
+  e acesse http://localhost:8000
+
+  BIBLIOTECAS EXTERNAS (carregadas só na hora de exportar)
+  - JSZip 3.10.1 (cdnjs) · ag-psd 30.2.0 (jsDelivr) · Montserrat (Google Fonts)
+=====================================================================
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gerador de artes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23563f99'/%3E%3Crect x='6' y='19' width='20' height='7' rx='2' fill='%23f3f3f3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css?v=202611241536">
+</head>
+<body>
+<!-- ============ TOPO: título, abas e status da conexão com o GitHub ============ -->
+<header class="top">
+  <h1><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg>Gerador de artes</h1>
+  <nav class="maintabs" role="tablist" aria-label="Seções">
+    <button role="tab" id="t-content" data-tab="content" aria-controls="tab-content"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m15 18 2 2 4-4"/></svg>Conteúdo</button>
+    <button role="tab" id="t-foot" data-tab="foot" aria-controls="tab-foot"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18"/></svg>Rodapé</button>
+    <button role="tab" id="t-news" data-tab="news" aria-controls="tab-news"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg>Gerar notícia</button>
+    <button role="tab" id="t-db" data-tab="db" aria-controls="tab-db"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Banco de dados</button>
+  </nav>
+  <!-- Status do banco: “Somente leitura” ou a conta/repositório conectados -->
+  <div class="adminchip" id="adminChip">
+    <span class="dot"></span><span id="adminWho">Somente leitura</span>
+    <button class="btn small" id="adminBtn" type="button">Conectar GitHub</button>
+  </div>
+</header>
+
+<!-- ============ ABA RODAPÉ ============
+     Coluna da esquerda: biblioteca de logos (ou ajustes, pela aba interna).
+     Área principal: templates, prévia do rodapé, quadro de vídeo e seções. -->
+<section class="tabpanel" id="tab-foot" role="tabpanel" aria-labelledby="t-foot" hidden>
+  <aside id="paneLib" aria-label="Biblioteca de logos">
+    <div class="ptabs" role="tablist"><button role="tab" data-pane="lib" aria-selected="true"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><circle cx="12" cy="8" r="1.5"/><path d="m21 13-3-3-6 6"/></svg>Biblioteca</button><button role="tab" data-pane="set" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Ajustes</button></div>
+    <p class="note">Arraste para uma seção ou clique para adicionar à seção selecionada.</p>
+    <input class="f-search" id="ftQ" type="search" placeholder="Pesquisar logo…" autocomplete="off">
+    <div class="tabs" role="group" aria-label="Filtrar" id="ftFilters">
+      <button class="tab" data-f="all" aria-pressed="true">Todos</button>
+      <button class="tab" data-f="grupo" aria-pressed="false">Grupo</button>
+      <button class="tab" data-f="farma" aria-pressed="false">Farmacêuticas</button>
+    </div>
+    <div class="f-lib" id="ftLib"></div>
+    <p class="status" id="ftStatus">Carregando logos…</p>
+    <!-- Atalho para a Área do administrador (mesmo botão do topo) -->
+    <button class="linkbtn" id="ftAdminLink" type="button"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Área do administrador</button>
+  </aside>
+  <aside id="paneSet" aria-label="Ajustes do rodapé" hidden>
+    <div class="ptabs" role="tablist"><button role="tab" data-pane="lib" aria-selected="false"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><circle cx="12" cy="8" r="1.5"/><path d="m21 13-3-3-6 6"/></svg>Biblioteca</button><button role="tab" data-pane="set" aria-selected="true"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Ajustes</button></div>
+    <div class="field"><label for="s_layout">Disposição</label>
+      <select id="s_layout"><option value="row">Seções lado a lado</option><option value="inline">Título ao lado (rodapé fino)</option><option value="stack">Seções empilhadas</option><option value="auto">Automática</option></select></div>
+    <label class="check"><input type="checkbox" id="s_fill"> Ocupar largura total (1080 px · 1920 px no rodapé fino)</label>
+    <div class="field"><label for="s_logoH">Altura dos logos <output id="o_logoH"></output></label><input type="range" id="s_logoH" min="24" max="140" step="1"></div>
+    <div class="field"><label for="s_maxW">Largura máx. do logo <output id="o_maxW"></output></label><input type="range" id="s_maxW" min="60" max="360" step="2"></div>
+    <div class="field"><label for="s_gap">Espaço entre logos <output id="o_gap"></output></label><input type="range" id="s_gap" min="6" max="80" step="1"></div>
+    <div class="field"><label for="s_secGap">Espaço até a linha <output id="o_secGap"></output></label><input type="range" id="s_secGap" min="8" max="80" step="1"></div>
+    <div class="field"><label for="s_pad">Margem interna <output id="o_pad"></output></label><input type="range" id="s_pad" min="10" max="80" step="1"></div>
+    <div class="field"><label for="s_radius">Arredondamento <output id="o_radius"></output></label><input type="range" id="s_radius" min="0" max="100" step="1"></div>
+    <hr class="sep">
+    <div class="field"><label for="s_titleSize">Tamanho do título <output id="o_titleSize"></output></label><input type="range" id="s_titleSize" min="9" max="32" step="1"></div>
+    <div class="row2">
+      <div class="field"><label for="s_titleWeight">Peso</label>
+        <select id="s_titleWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">SemiBold</option><option value="700">Bold</option><option value="800">ExtraBold</option></select></div>
+      <div class="field"><label for="s_align">Alinhamento</label>
+        <select id="s_align"><option value="center">Centro</option><option value="left">Esquerda</option></select></div>
+    </div>
+    <label class="check"><input type="checkbox" id="s_upper"> Títulos em maiúsculas</label>
+    <div class="field"><span class="lbl">Cor do título</span><div class="colorrow"><input type="color" id="s_titleColor" aria-label="Cor do título"><div class="swatches" data-for="s_titleColor"></div></div></div>
+    <hr class="sep">
+    <div class="field"><span class="lbl">Cor da linha</span><div class="colorrow"><input type="color" id="s_lineColor" aria-label="Cor da linha"><div class="swatches" data-for="s_lineColor"></div></div></div>
+    <div class="field"><label for="s_lineW">Espessura da linha <output id="o_lineW"></output></label><input type="range" id="s_lineW" min="0" max="4" step="0.5"></div>
+    <div class="field"><span class="lbl">Cor do fundo</span><div class="colorrow"><input type="color" id="s_bg" aria-label="Cor do fundo"><div class="swatches" data-for="s_bg"></div></div></div>
+    <hr class="sep">
+    <button class="btn" id="ftResetBtn">Restaurar padrão</button>
+  </aside>
+  <div class="fmain">
+    <div class="tplbar">
+      <span class="tpl-label"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="9" height="7" rx="1"/><rect x="16" y="14" width="5" height="7" rx="1"/></svg>Templates básicos</span>
+      <div class="tpl-btns" id="ftTpl" role="group" aria-label="Templates básicos"></div>
+    </div>
+    <div class="f-top">
+      <div>
+        <h2><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18"/></svg>Rodapé de logos</h2>
+        <p class="note" style="margin-top:4px">PNG com fundo transparente · <span class="dims" id="ftDims">—</span> <span id="ftFit"></span> · usado em todas as artes da aba Gerar notícia</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="ftSaveDb"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg>Salvar no banco</button>
+        <button class="btn" id="ftPsdBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Baixar PSD</button>
+        <button class="btn primary" id="ftPngBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Baixar PNG</button>
+      </div>
+    </div>
+    <!-- Controles rápidos: “Título acima” ou “Título ao lado” (rodapé fino,
+         até 1920 px) e arredondamento (no máximo, formato pílula) -->
+    <div class="quick">
+      <div class="seg" id="ftSeg" role="group" aria-label="Formato do rodapé">
+        <button type="button" data-layout="row" aria-pressed="false">Título acima</button>
+        <button type="button" data-layout="inline" aria-pressed="false">Título ao lado</button>
+      </div>
+      <label class="qr" for="q_radius">Arredondamento <input type="range" id="q_radius" min="0" max="100" step="1"><output id="oq_radius"></output></label>
+    </div>
+    <!-- Disclaimer: o mesmo texto do passo 5 da aba Conteúdo (sincronizado) -->
+    <div class="field"><label for="ftDiscText">Disclaimer (abaixo do rodapé, centralizado)</label>
+      <textarea class="txt" id="ftDiscText" rows="2" placeholder="Ex.: Material destinado exclusivamente a profissionais de saúde."></textarea></div>
+    <div class="stage checker" id="ftStage"><canvas id="ftCv" aria-label="Prévia do rodapé"></canvas><p class="note" id="ftEmpty" hidden>Adicione logos às seções abaixo para montar o rodapé.</p></div>
+    <div class="vid">
+      <canvas id="ftVcv" class="checker" width="960" height="540" aria-label="Prévia do quadro 1920 × 1080"></canvas>
+      <div class="vid-ctl">
+        <h3><svg class="i" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="m10 8 5 2.5-5 2.5z"/></svg>Quadro de vídeo 1920 × 1080</h3>
+        <p class="note">O rodapé fica centralizado na parte de baixo do quadro, com o resto transparente.</p>
+        <div class="field"><label for="s_vMargin">Espaço até a borda inferior <output id="o_vMargin"></output></label><input type="range" id="s_vMargin" min="0" max="400" step="2"></div>
+        <button class="btn" id="ftVidBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Baixar 1920 × 1080</button>
+      </div>
+    </div>
+    <div class="secs-head">
+      <h3><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>Seções</h3>
+      <button class="btn" id="ftAddSec">Adicionar seção</button>
+    </div>
+    <div class="f-secs" id="ftSecs"></div>
+  </div>
+</section>
+
+<!-- ============ ABA CONTEÚDO (primeira aba) ============
+     Criação simplificada, em uma coluna e na ordem de uso:
+       1. Identidade visual (marca)   4. Doutores      7. Detalhes
+       2. Tag de evento               5. Rodapé           (ajustes extras,
+       3. Texto da notícia            6. Imagem            fechado)
+     À direita, a prévia ao vivo de um formato à escolha. -->
+<section class="tabpanel" id="tab-content" role="tabpanel" aria-labelledby="t-content" hidden>
+  <div class="cgrid">
+    <div class="cform">
+
+      <!-- 1. Identidade visual: só os botões das marcas -->
+      <section class="cstep">
+        <h3><span class="n">1</span>Identidade visual</h3>
+        <div class="brands brandbig" data-brands role="group" aria-label="Marca"></div>
+      </section>
+
+      <!-- 2. Tag de evento (opcional) -->
+      <section class="cstep">
+        <h3><span class="n">2</span>Tag de evento <small>opcional</small></h3>
+        <input class="txt" id="eventTag" placeholder="Ex.: ESMO® 2026" autocomplete="off" aria-label="Tag de evento">
+        <p class="note"><kbd>Ctrl</kbd> + <kbd>R</kbd> insere “®”, que aparece menor e elevado na arte.</p>
+      </section>
+
+      <!-- 3. Texto da notícia: título e subtítulo, negrito com Ctrl + B -->
+      <section class="cstep">
+        <h3><span class="n">3</span>Texto da notícia</h3>
+        <div class="rte-bar"><button type="button" class="boldBtn" data-for="rte" title="Negrito (Ctrl + B)" aria-label="Negrito">B</button><span class="note">Título · negrito com <kbd>Ctrl</kbd> + <kbd>B</kbd></span></div>
+        <div class="rte" id="rte" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Título da notícia" data-ph="Título da notícia"></div>
+        <div class="rte-bar"><button type="button" class="boldBtn" data-for="rteSub" title="Negrito (Ctrl + B)" aria-label="Negrito no subtítulo">B</button><span class="note">Subtítulo (opcional)</span></div>
+        <div class="rte sub" id="rteSub" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Subtítulo" data-ph="Ex.: Especialistas discutem decisões terapêuticas…"></div>
+        <!-- O texto nunca sai da arte: ao crescer, os blocos ao redor se reorganizam
+             (e os doutores sobem um pouco); só no limite o texto diminui -->
+        <div class="field"><label for="headScale">Tamanho do texto <output id="headScaleO"></output></label><input type="range" id="headScale" min="60" max="160" step="1"></div>
+      </section>
+
+      <!-- 4. Doutores: até 4, o primeiro fica à direita -->
+      <section class="cstep">
+        <h3><span class="n">4</span>Doutores <span class="pill" id="docCount"></span></h3>
+        <div class="docs" id="docs"></div>
+        <div class="row2"><button class="btn small" id="addDoc"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Novo doutor</button><button class="btn small" id="pullDoc"><svg class="i" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg>Puxar do banco</button></div>
+      </section>
+
+      <!-- 5. Rodapé: prévia, rodapé salvo e disclaimer -->
+      <section class="cstep">
+        <h3><span class="n">5</span>Rodapé</h3>
+        <div class="fprev checker" id="nfPrevBox"><canvas id="nfPrev" aria-label="Prévia do rodapé"></canvas></div>
+        <div class="row2"><button class="btn small" id="nfPull">Puxar rodapé salvo</button><button class="btn small" id="nfEdit">Editar na aba Rodapé</button></div>
+        <div class="field"><label for="footScale">Tamanho do rodapé <output id="footScaleO"></output></label><input type="range" id="footScale" min="50" max="160" step="1"></div>
+        <!-- Fundo preto transparente atrás do disclaimer, só nos formatos Site e Site OBR e Hemo -->
+        <label class="check"><input type="checkbox" id="shadeOn"> Fundo preto transparente no disclaimer (Site e Site OBR e Hemo)</label>
+        <div class="field"><label for="shadeA">Transparência do fundo preto <output id="shadeAO"></output></label><input type="range" id="shadeA" min="5" max="90" step="1"></div>
+        <div class="field"><label for="discText">Disclaimer (abaixo do rodapé, opcional, centralizado)</label>
+          <textarea class="txt" id="discText" rows="2" placeholder="Ex.: Material destinado exclusivamente a profissionais de saúde."></textarea></div>
+      </section>
+
+      <!-- 6. Imagem de fundo -->
+      <section class="cstep">
+        <h3><span class="n">6</span>Imagem</h3>
+        <div class="dropz" id="bgDrop" tabindex="0" role="button"></div>
+        <input type="file" id="bgFile" accept="image/*" hidden>
+      </section>
+
+      <!-- 7. Detalhes: ajustes adicionais, fechados por padrão -->
+      <details class="sec cdetails">
+        <summary><svg class="i" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Detalhes</summary>
+        <div class="sec-body">
+          <h4>Identidade</h4>
+          <div class="idcolors" id="idColors"></div>
+          <button class="linkbtn" id="idEditColors" type="button">Editar cores no Banco de dados</button>
+
+          <h4>Layout dos blocos</h4>
+          <p class="note">Doutores, texto, botão e rodapé ficam com a mesma distância entre si, ajustada sozinha em cada formato.</p>
+          <div class="flowctl" data-flowctl>
+          <label class="check"><input type="checkbox" data-flow="on"> Alinhar blocos automaticamente</label>
+          <label class="fl">Distância entre blocos <input type="range" data-flow="gap" min="30" max="220" step="5"><output data-flowo="gap"></output></label>
+          <label class="fl">Posição do conjunto <input type="range" data-flow="shift" min="-200" max="200" step="2"><output data-flowo="shift"></output></label>
+          <button class="btn small" type="button" data-flow="reset">Padrão</button>
+        </div>
+
+          <h4>Tags</h4>
+          <div class="field"><label for="tagText">Tag da marca</label><input class="txt" id="tagText" autocomplete="off"></div>
+          <label class="check"><input type="checkbox" id="tagUpper"> Tags em maiúsculas</label>
+
+          <h4>Botão</h4>
+          <div class="field"><label for="ctaText">Texto do botão (formatos com CTA)</label><input class="txt" id="ctaText" autocomplete="off"></div>
+
+          <h4>Doutores</h4>
+          <div class="field"><label for="docGap">Distância entre os doutores <output id="docGapO"></output></label><input type="range" id="docGap" min="40" max="300" step="5"></div>
+
+          <h4>Imagem</h4>
+          <div class="field"><label for="bgZoom">Zoom em todos os formatos <output id="bgZoomO"></output></label><input type="range" id="bgZoom" min="100" max="300" step="1"></div>
+          <div class="row"><button class="btn small" id="bgResetAll">Recentralizar todos</button><button class="btn small" id="bgRemove">Remover imagem</button></div>
+          <div class="field"><label for="dotsK">Bolinhas (partes escuras) <output id="dotsKO"></output></label><input type="range" id="dotsK" min="0" max="250" step="5"></div>
+
+          <h4>Rodapé</h4>
+          <div class="nfsecs" id="nfSecs"></div>
+          <div class="dropz" id="fImpDrop" tabindex="0" role="button" style="padding:10px"><b>Usar um PNG de rodapé pronto</b>solte o arquivo ou clique para escolher</div>
+          <input type="file" id="fImpFile" accept="image/png,image/webp,image/jpeg" hidden>
+          <div class="row" id="fImpRow" hidden><span class="pill">Usando o PNG importado</span><button class="btn small" id="fImpClear">Voltar ao rodapé montado</button></div>
+
+          <h4>Disclaimer</h4>
+          <div class="row2">
+            <div class="field"><label for="discSize">Tamanho da fonte <output id="discSizeO"></output></label><input type="range" id="discSize" min="8" max="40" step="1"></div>
+            <div class="field"><label for="discWeight">Peso</label><select id="discWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">SemiBold</option><option value="700">Bold</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="discColor">Cor</label><select id="discColor"><option value="auto">Automática</option><option value="black">Preta</option><option value="white">Branca</option><option value="gray">Cinza</option><option value="brand">Cor da marca</option></select></div>
+          </div>
+          <label class="check"><input type="checkbox" id="discItalic"> Itálico</label>
+
+          <hr class="sep">
+          <button class="btn" id="resetAll">Começar do zero</button>
+        </div>
+      </details>
+    </div>
+    <aside class="cprevw" aria-label="Prévia">
+      <div class="row"><b>Prévia</b><select id="cpFmt" aria-label="Formato da prévia" style="flex:1"></select></div>
+      <canvas id="cpCv" aria-label="Prévia da arte"></canvas>
+      <button class="btn primary" id="cpGo" type="button">Ver todos os formatos</button>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ ABA GERAR NOTÍCIA ============
+     O conteúdo é editado na aba Conteúdo.
+     Centro: marcas, downloads, formatos e as pranchetas.
+     Direita: inspetor de posição do elemento selecionado. -->
+<section class="tabpanel" id="tab-news" role="tabpanel" aria-labelledby="t-news" hidden>
+  <div class="nmain">
+    <div class="newsbar">
+      <div class="brands" data-brands role="group" aria-label="Marca"></div>
+      <div class="actions">
+        <button class="btn" id="pngsBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Baixar PNGs</button>
+        <button class="btn primary" id="psdBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Baixar PSD</button>
+      </div>
+    </div>
+    <div class="boardbar">
+      <label for="zoom">Prévia <input type="range" id="zoom" min="10" max="60" step="1"></label>
+      <div class="fmtchips" id="fmtChips" role="group" aria-label="Formatos exibidos e exportados"></div>
+<div class="flowctl" data-flowctl>
+          <label class="check"><input type="checkbox" data-flow="on"> Alinhar blocos automaticamente</label>
+          <label class="fl">Distância entre blocos <input type="range" data-flow="gap" min="30" max="220" step="5"><output data-flowo="gap"></output></label>
+          <label class="fl">Posição do conjunto <input type="range" data-flow="shift" min="-200" max="200" step="2"><output data-flowo="shift"></output></label>
+          <button class="btn small" type="button" data-flow="reset">Padrão</button>
+        </div>
+      <button class="btn small" id="addFmt"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Formato personalizado</button>
+    </div>
+    <div class="boards" id="boards"></div>
+  </div>
+  <aside class="insp" aria-label="Posição do elemento">
+    <h2><svg class="i" viewBox="0 0 24 24"><path d="M5 9 2 12l3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>Posição</h2>
+    <div id="inspBody"></div>
+  </aside>
+</section>
+
+<!-- ============ ABA BANCO DE DADOS ============
+     Faixa de status (somente leitura × administrador) e quatro cartões:
+     Cores (+ sombra), Doutores, Logos e Rodapés salvos. Tudo vem de
+     dados/banco.json e logos/logos.json no repositório. -->
+<section class="tabpanel" id="tab-db" role="tabpanel" aria-labelledby="t-db" hidden>
+  <div class="dbbanner" id="dbBanner">
+    <svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <span id="dbBannerTxt"></span>
+    <button class="btn small" id="dbBannerBtn" type="button">Conectar GitHub</button>
+  </div>
+  <div class="dbgrid">
+    <div class="card" id="cardColors">
+      <div class="card-head"><h2><svg class="i" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 9.8C22 5.5 17.5 2 12 2z"/></svg>Cores</h2><button class="btn small" id="colorsReset">Restaurar padrão</button></div>
+      <div id="colorsBox"></div>
+      <p class="note">A cor escura pinta painéis e tags; a clara, curvas, faixas e o degradê do botão. A branca também é a cor da tag de evento. Mudanças valem para todas as abas.</p>
+      <div class="field"><label for="shadowA">Sombra das fotos dos doutores (opacidade) <output id="shadowAO"></output></label><input type="range" id="shadowA" min="0" max="60" step="1"></div>
+      <!-- Aparece quando há cores/sombra editadas e ainda não publicadas -->
+      <div class="draftbar" id="draftBar" hidden>
+        <span>Alterações só nesta tela. Publique para valerem para todos.</span>
+        <button class="btn small" id="draftDiscard" type="button">Descartar</button>
+        <button class="btn small primary" id="draftPublish" type="button">Publicar</button>
+      </div>
+    </div>
+    <div class="acc-col">
+    <details class="card acc">
+      <summary class="card-head"><h2><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/></svg>Doutores</h2><button class="btn small primary" id="dbAddDoc"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Novo doutor</button><span class="chev" aria-hidden="true"></span></summary>
+      <div class="acc-body">
+      <input class="txt" id="dbDocQ" type="search" placeholder="Pesquisar doutor…" autocomplete="off">
+      <div class="dbdocs" id="dbDocs"></div>
+    </div></details>
+    <details class="card acc">
+      <summary class="card-head"><h2><svg class="i" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/></svg>Logos</h2><button class="btn small primary" id="dbAddLogo"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Enviar logo</button><span class="chev" aria-hidden="true"></span></summary>
+      <div class="acc-body">
+      <div class="row"><input class="txt" id="dbLogoQ" type="search" placeholder="Pesquisar logo…" autocomplete="off" style="flex:1;min-width:160px">
+        <div class="tabs" id="dbLogoF"><button class="tab" data-f="all" aria-pressed="true">Todos</button><button class="tab" data-f="grupo" aria-pressed="false">Grupo</button><button class="tab" data-f="farma" aria-pressed="false">Farmacêuticas</button></div></div>
+      <div class="dblogos" id="dbLogos"></div>
+    </div></details>
+    <details class="card acc">
+      <summary class="card-head"><h2><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18"/></svg>Rodapés salvos</h2><button class="btn small primary" id="dbSaveFoot"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Salvar o rodapé atual</button><span class="chev" aria-hidden="true"></span></summary>
+      <div class="acc-body">
+      <div class="dbfoots" id="dbFoots"></div>
+    </div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIÁLOGOS ============
+     upDlg: enviar logo · docDlg: cadastrar doutor · pickDlg: puxar do banco
+     fmtDlg: formato personalizado · askDlg: confirmação/nome -->
+<dialog id="upDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2 id="upTitle">Enviar logo</h2><button class="ico del" id="upX" type="button" aria-label="Fechar">×</button></div>
+    <div class="field"><label for="upName">Nome</label><input class="txt" id="upName" placeholder="Ex.: Laboratório Exemplo" autocomplete="off"></div>
+    <div class="field" id="upGroupField"><label for="upGroup">Categoria</label><select id="upGroup"><option value="grupo">Grupo</option><option value="farma">Farmacêuticas</option></select></div>
+    <div class="dropz" id="upDrop" tabindex="0" role="button">Solte o arquivo aqui ou clique para escolher<br><span class="note">PNG, JPG, SVG ou WEBP</span></div>
+    <input type="file" id="upFile" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+    <div class="prev checker" id="upPrev" hidden><img id="upImg" alt=""></div>
+    <label class="check"><input type="checkbox" id="upKey" checked> Remover fundo branco e recortar margens</label>
+    <p class="note" id="upNote"></p>
+    <p class="note" id="upLocalNote"></p>
+    <div class="dlg-actions">
+      <!-- Baixa o PNG já tratado (fundo removido e margens recortadas) -->
+      <button class="btn" id="upDownload" type="button" disabled style="margin-right:auto">Baixar PNG tratado</button>
+      <button class="btn" id="upCancel" type="button">Cancelar</button><button class="btn primary" id="upSave" type="button" disabled>Salvar logo</button></div>
+  </form>
+</dialog>
+
+<dialog id="logoEdDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2 id="leTitle">Editar logo</h2><button class="ico del" id="leX" type="button" aria-label="Fechar">×</button></div>
+    <div class="prev checker" id="lePrev"><img id="leImg" alt=""></div>
+    <div class="field"><label for="leName">Nome</label><input class="txt" id="leName" autocomplete="off"></div>
+    <p class="note" id="leNote">Rodapés salvos e templates que usam este logo são atualizados junto.</p>
+    <div class="dlg-actions">
+      <button class="btn" id="leSwap" type="button" style="margin-right:auto">Trocar arquivo…</button>
+      <button class="btn" id="leCancel" type="button">Cancelar</button><button class="btn primary" id="leSave" type="button">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="docDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2 id="docDlgTitle">Novo doutor</h2><button class="ico del" id="docDlgX" type="button" aria-label="Fechar">×</button></div>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center">
+      <canvas class="ph" id="docDlgPh" width="240" height="240" style="width:120px;height:120px" tabindex="0" role="button" aria-label="Foto do doutor"></canvas>
+      <div class="dlg" style="gap:8px">
+        <input class="txt" id="docDlgName" placeholder="Nome (ex.: Dra. Luiza Dib)" autocomplete="off" aria-label="Nome">
+        <input class="txt" id="docDlgCrm" placeholder="CRM (cole em qualquer formato)" autocomplete="off" aria-label="CRM">
+        <div class="field"><label for="docDlgZ">Zoom da foto</label><input type="range" id="docDlgZ" min="100" max="300"></div>
+      </div>
+    </div>
+    <input type="file" id="docDlgFile" accept="image/*" hidden>
+    <p class="note">Clique no círculo ou solte uma foto nele. Arraste a foto para enquadrar o rosto.</p>
+    <p class="note" id="docDlgNote"></p>
+    <div class="dlg-actions"><button class="btn" id="docDlgCancel" type="button">Cancelar</button><button class="btn primary" id="docDlgSave" type="button">Publicar no banco</button></div>
+  </form>
+</dialog>
+
+<dialog id="pickDlg" class="wide">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="pickTitle">Escolher</h2><button class="ico del" id="pickX" type="button" aria-label="Fechar">×</button></div>
+    <input class="txt" id="pickQ" type="search" placeholder="Pesquisar…" autocomplete="off">
+    <div class="tabs" id="pickF" hidden><button class="tab" data-f="all" aria-pressed="true">Todos</button><button class="tab" data-f="grupo" aria-pressed="false">Grupo</button><button class="tab" data-f="farma" aria-pressed="false">Farmacêuticas</button></div>
+    <div class="pickgrid" id="pickGrid"></div>
+  </div>
+</dialog>
+
+<dialog id="fmtDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2>Formato personalizado</h2><button class="ico del" id="fmtX" type="button" aria-label="Fechar">×</button></div>
+    <div class="field"><label for="fmtName">Nome</label><input class="txt" id="fmtName" placeholder="Ex.: Newsletter" autocomplete="off"></div>
+    <div class="row2">
+      <div class="field"><label for="fmtW">Largura (px)</label><input class="txt" id="fmtW" type="number" min="100" max="6000" value="1080"></div>
+      <div class="field"><label for="fmtH">Altura (px)</label><input class="txt" id="fmtH" type="number" min="100" max="6000" value="1080"></div>
+    </div>
+    <div class="field"><label for="fmtBase">Layout de partida</label><select id="fmtBase"></select></div>
+    <p class="note">O layout escolhido é adaptado ao novo tamanho. Depois, ajuste cada elemento direto na arte.</p>
+    <div class="dlg-actions"><button class="btn" id="fmtCancel" type="button">Cancelar</button><button class="btn primary" id="fmtSave" type="button">Criar formato</button></div>
+  </form>
+</dialog>
+
+<dialog id="askDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2 id="askTitle">Confirmar</h2></div>
+    <p class="note" id="askMsg" style="font-size:13px"></p>
+    <input class="txt" id="askInput" autocomplete="off" hidden>
+    <div class="dlg-actions"><button class="btn" id="askNo" type="button">Cancelar</button><button class="btn primary" id="askYes" type="button">OK</button></div>
+  </form>
+</dialog>
+<!-- ============ RECORTE DA FOTO DO MÉDICO ============
+     Abre ao adicionar uma foto (ou pelo ✂). O círculo mostra exatamente
+     o que aparece na arte; o resultado é um JPG quadrado de 800 × 800. -->
+<dialog id="cropDlg">
+  <div class="dlg">
+    <div class="dlg-head"><h2>Recortar foto</h2><button class="ico del" id="cropX" type="button" aria-label="Fechar">×</button></div>
+    <canvas id="cropCv" class="cropcv" tabindex="0" aria-label="Arraste para posicionar o rosto no círculo"></canvas>
+    <div class="field"><label for="cropZ">Zoom <output id="cropZO"></output></label><input type="range" id="cropZ" min="100" max="400" step="1"></div>
+    <p class="note">Arraste a foto para posicionar o rosto dentro do círculo (ou use as setas). As linhas tracejadas marcam a altura dos olhos e do queixo. A roda do mouse também dá zoom.</p>
+    <div class="dlg-actions"><button class="btn" id="cropCancel" type="button">Cancelar</button><button class="btn primary" id="cropApply" type="button">Aplicar recorte</button></div>
+  </div>
+</dialog>
+<!-- ============ ÁREA DO ADMINISTRADOR ============
+     Conecta o site ao repositório com uma chave do GitHub (fine-grained
+     token, “Contents: Read and write” só neste repositório). A chave
+     fica guardada só neste navegador. -->
+<dialog id="admDlg">
+  <form method="dialog" class="dlg" onsubmit="return false">
+    <div class="dlg-head"><h2>Área do administrador</h2><button class="ico del" id="admX" type="button" aria-label="Fechar">×</button></div>
+    <p class="note">Conecte com a sua chave do GitHub. Com ela, o que você publicar, trocar ou remover (logos, doutores, cores, sombra e rodapés salvos) vale para todos que usam o gerador.</p>
+    <div class="field"><label for="admRepo">Repositório</label><input class="txt" id="admRepo" placeholder="usuario/gerador-rodape" autocomplete="off" spellcheck="false"></div>
+    <div class="field"><label for="admBranch">Branch</label><input class="txt" id="admBranch" placeholder="main" autocomplete="off" spellcheck="false"></div>
+    <div class="field"><label for="admToken">Chave do GitHub (token)</label><input class="txt" id="admToken" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false"></div>
+    <label class="check"><input type="checkbox" id="admRemember" checked> Lembrar neste navegador</label>
+    <p class="note" id="admNote" role="alert"></p>
+    <div class="dlg-actions"><button class="btn" id="admCancel" type="button">Cancelar</button><button class="btn primary" id="admConnect" type="button">Conectar</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<!-- Todo o comportamento da página está em script.js -->
+<script src="script.js?v=202611241536"></script>
+<script>document.querySelectorAll(".acc > summary button").forEach(b=>b.addEventListener("click",e=>e.preventDefault()));</script>
+</body>
+</html>
